@@ -72,24 +72,26 @@
 )
 
 (define-public (reconcile-invoice (contract-id uint) (variance uint))
-  (let ((invoice (map-get? final-invoices { contract-id: contract-id })))
-    (if (is-some invoice)
-      (let ((current (unwrap-panic invoice)))
-        (begin
-          (asserts! (is-eq tx-sender CONTRACT-OWNER) ERR-NOT-AUTHORIZED)
-          (map-set final-invoices
-            { contract-id: contract-id }
-            (merge current {
-              reconciliation-status: "reconciled",
-              reconciled-date: u0,
-              variance-amount: variance
-            })
+  (if (is-eq tx-sender CONTRACT-OWNER)
+    (let ((invoice (map-get? final-invoices { contract-id: contract-id })))
+      (if (is-some invoice)
+        (let ((current (unwrap-panic invoice)))
+          (begin
+            (map-set final-invoices
+              { contract-id: contract-id }
+              (merge current {
+                reconciliation-status: "reconciled",
+                reconciled-date: u0,
+                variance-amount: variance
+              })
+            )
+            (ok true)
           )
-          (ok true)
         )
+        (err ERR-NOT-FOUND)
       )
-      (err ERR-NOT-FOUND)
     )
+    (err ERR-NOT-AUTHORIZED)
   )
 )
 
